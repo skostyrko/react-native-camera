@@ -275,7 +275,8 @@ class RCTCameraViewFinder extends TextureView implements TextureView.SurfaceText
             int height = size.height;
 
             // rotate for zxing if orientation is portrait
-            if (RCTCamera.getInstance().getActualDeviceOrientation() == 0) {
+            // remove rotation
+            /* if (RCTCamera.getInstance().getActualDeviceOrientation() == 0) {
               byte[] rotated = new byte[imageData.length];
               for (int y = 0; y < height; y++) {
                 for (int x = 0; x < width; x++) {
@@ -285,7 +286,7 @@ class RCTCameraViewFinder extends TextureView implements TextureView.SurfaceText
               width = size.height;
               height = size.width;
               imageData = rotated;
-            }
+            } */
 
             try {
                 PlanarYUVLuminanceSource source = new PlanarYUVLuminanceSource(imageData, width, height, 0, 0, width, height, false);
