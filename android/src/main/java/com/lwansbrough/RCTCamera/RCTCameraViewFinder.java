@@ -116,6 +116,7 @@ class RCTCameraViewFinder extends TextureView implements TextureView.SurfaceText
         if (!_isStarting) {
             _isStarting = true;
             try {
+                RCTCamera.getInstance().registerView(_cameraType);
                 _camera = RCTCamera.getInstance().acquireCameraInstance(_cameraType);
                 Camera.Parameters parameters = _camera.getParameters();
                 // set autofocus
@@ -133,6 +134,7 @@ class RCTCameraViewFinder extends TextureView implements TextureView.SurfaceText
                 parameters.setPictureSize(optimalPictureSize.width, optimalPictureSize.height);
 
                 _camera.setParameters(parameters);
+                _camera.stopPreview();
                 _camera.setPreviewTexture(_surfaceTexture);
                 _camera.startPreview();
                 // send previews to `onPreviewFrame`
@@ -153,10 +155,7 @@ class RCTCameraViewFinder extends TextureView implements TextureView.SurfaceText
             _isStopping = true;
             try {
                 if (_camera != null) {
-                    _camera.stopPreview();
-                    // stop sending previews to `onPreviewFrame`
-                    _camera.setPreviewCallback(null);
-                    RCTCamera.getInstance().releaseCameraInstance(_cameraType);
+                    RCTCamera.getInstance().unregisterView(_cameraType);
                     _camera = null;
                 }
 
@@ -305,6 +304,20 @@ class RCTCameraViewFinder extends TextureView implements TextureView.SurfaceText
                 _multiFormatReader.reset();
                 RCTCameraViewFinder.barcodeScannerTaskLock = false;
                 return null;
+            }
+        }
+    }
+
+    public void update()
+    {
+        if (_camera != null) {
+            try {
+                _camera.stopPreview();
+                _camera.setPreviewTexture(_surfaceTexture);
+                _camera.startPreview();
+                _camera.setPreviewCallback(this);
+            } catch (Exception e) {
+                e.printStackTrace();
             }
         }
     }

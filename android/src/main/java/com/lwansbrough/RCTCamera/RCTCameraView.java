@@ -175,4 +175,10 @@ public class RCTCameraView extends ViewGroup {
         this._viewFinder.layout(viewFinderPaddingX, viewFinderPaddingY, viewFinderPaddingX + viewfinderWidth, viewFinderPaddingY + viewfinderHeight);
         this.postInvalidate(this.getLeft(), this.getTop(), this.getRight(), this.getBottom());
     }
+
+    public void update() {
+        if (this._viewFinder != null) {
+            this._viewFinder.update();
+        }
+    }
 }

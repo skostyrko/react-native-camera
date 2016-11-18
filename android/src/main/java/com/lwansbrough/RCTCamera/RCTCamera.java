@@ -16,6 +16,7 @@ public class RCTCamera {
     private static RCTCamera ourInstance;
     private final HashMap<Integer, CameraInfoWrapper> _cameraInfos;
     private final HashMap<Integer, Integer> _cameraTypeToIndex;
+    private final HashMap<Integer, Integer> _cameraViews;
     private final Map<Number, Camera> _cameras;
     private boolean _barcodeScannerEnabled = false;
     private List<String> _barCodeTypes = null;
@@ -27,9 +28,25 @@ public class RCTCamera {
         return ourInstance;
     }
     public static void createInstance(int deviceOrientation) {
-        ourInstance = new RCTCamera(deviceOrientation);
+        if (ourInstance == null) {
+            ourInstance = new RCTCamera(deviceOrientation);
+        }
     }
 
+    public void registerView(int type) {
+        _cameraViews.put(type, _cameraViews.get(type) + 1);
+    }
+
+    public void unregisterView(int type) {
+        int count = _cameraViews.get(type) - 1;
+        if (count < 0) {
+            count = 0;
+        }
+        _cameraViews.put(type, count);
+        if (count == 0) {
+            releaseCameraInstance(type);
+        }
+    }
 
     public Camera acquireCameraInstance(int type) {
         if (null == _cameras.get(type) && null != _cameraTypeToIndex.get(type)) {
@@ -46,7 +63,9 @@ public class RCTCamera {
 
     public void releaseCameraInstance(int type) {
         if (null != _cameras.get(type)) {
-            _cameras.get(type).release();
+            Camera camera = _cameras.get(type);
+            camera.setPreviewCallback(null);
+            camera.release();
             _cameras.remove(type);
         }
     }
@@ -358,6 +377,7 @@ public class RCTCamera {
         _cameras = new HashMap<>();
         _cameraInfos = new HashMap<>();
         _cameraTypeToIndex = new HashMap<>();
+        _cameraViews = new HashMap<>();
 
         _actualDeviceOrientation = deviceOrientation;
 
@@ -368,11 +388,13 @@ public class RCTCamera {
             if (info.facing == Camera.CameraInfo.CAMERA_FACING_FRONT && _cameraInfos.get(RCTCameraModule.RCT_CAMERA_TYPE_FRONT) == null) {
                 _cameraInfos.put(RCTCameraModule.RCT_CAMERA_TYPE_FRONT, new CameraInfoWrapper(info));
                 _cameraTypeToIndex.put(RCTCameraModule.RCT_CAMERA_TYPE_FRONT, i);
+                _cameraViews.put(RCTCameraModule.RCT_CAMERA_TYPE_FRONT, 0);
                 acquireCameraInstance(RCTCameraModule.RCT_CAMERA_TYPE_FRONT);
                 releaseCameraInstance(RCTCameraModule.RCT_CAMERA_TYPE_FRONT);
             } else if (info.facing == Camera.CameraInfo.CAMERA_FACING_BACK && _cameraInfos.get(RCTCameraModule.RCT_CAMERA_TYPE_BACK) == null) {
                 _cameraInfos.put(RCTCameraModule.RCT_CAMERA_TYPE_BACK, new CameraInfoWrapper(info));
                 _cameraTypeToIndex.put(RCTCameraModule.RCT_CAMERA_TYPE_BACK, i);
+                _cameraViews.put(RCTCameraModule.RCT_CAMERA_TYPE_BACK, 0);
                 acquireCameraInstance(RCTCameraModule.RCT_CAMERA_TYPE_BACK);
                 releaseCameraInstance(RCTCameraModule.RCT_CAMERA_TYPE_BACK);
             }
